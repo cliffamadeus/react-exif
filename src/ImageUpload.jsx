@@ -4,6 +4,7 @@ import ExifReader from 'exifreader';
 const ImageUpload = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [metadata, setMetadata] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -40,6 +41,9 @@ const ImageUpload = () => {
     </div>
   );
 
+  const handleOpenModal = () => setShowModal(true);
+  const handleCloseModal = () => setShowModal(false);
+
   return (
     <div className="container mt-6">
       <div className="row">
@@ -53,6 +57,11 @@ const ImageUpload = () => {
                     }} 
                     src={imagePreview} alt="Preview" className="img-fluid" />
             </div>
+          )}
+          {metadata && (
+            <button className="btn btn-primary mt-3" onClick={handleOpenModal}>
+              View All Metadata
+            </button>
           )}
         </div>
         <div className="col-md-9">
@@ -108,6 +117,33 @@ const ImageUpload = () => {
                   </div>
                   <div className="col-md-6">
                     {renderMetadataGroup("🖼️ Image Properties", ["Orientation", "ImageWidth", "ImageHeight"])}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showModal && metadata && (
+            <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+              <div className="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">All EXIF Metadata</h5>
+                    <button type="button" className="btn-close" onClick={handleCloseModal}></button>
+                  </div>
+                  <div className="modal-body">
+                    <ul className="list-group list-group-flush">
+                      {Object.entries(metadata).map(([key, tag]) => (
+                        <li key={key} className="list-group-item">
+                          <strong>{key}:</strong> {tag.description || tag.value?.toString()}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+                      Close
+                    </button>
                   </div>
                 </div>
               </div>
