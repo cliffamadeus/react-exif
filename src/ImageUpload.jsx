@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ExifReader from 'exifreader';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -18,6 +18,8 @@ const ImageUpload = () => {
   const [showModal, setShowModal] = useState(false);
   const [mapCenter, setMapCenter] = useState([0, 0]);
   const [hasLocation, setHasLocation] = useState(false);
+  const mapRef = useRef(null);
+  const [originalCenter, setOriginalCenter] = useState([0, 0]);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -31,7 +33,7 @@ const ImageUpload = () => {
       // Process EXIF metadata
       try {
         const tags = await ExifReader.load(file);
-        console.log('EXIF Metadata:', tags); // Log metadata for debugging
+        console.log('EXIF Metadata:', tags);
         setMetadata(tags);
 
         // Check for GPS coordinates
@@ -39,6 +41,7 @@ const ImageUpload = () => {
           const lat = parseFloat(tags.GPSLatitude.description);
           const lng = parseFloat(tags.GPSLongitude.description);
           setMapCenter([lat, lng]);
+          setOriginalCenter([lat, lng]); // Store original center for reset
           setHasLocation(true);
         } else {
           setHasLocation(false);
@@ -47,6 +50,12 @@ const ImageUpload = () => {
         console.error('Error processing EXIF data:', error);
         setHasLocation(false);
       }
+    }
+  };
+
+  const handleResetMap = () => {
+    if (mapRef.current && originalCenter) {
+      mapRef.current.flyTo(originalCenter, 15);
     }
   };
 
@@ -119,12 +128,22 @@ const ImageUpload = () => {
           {hasLocation && (
             <div className="card mt-4">
               <div className="card-body">
-                <h5 className="card-title">Location Map</h5>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="card-title mb-0">Location Map</h5>
+                  <button 
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={handleResetMap}
+                    title="Reset map to original location"
+                  >
+                    <i className="bi bi-arrow-counterclockwise"></i> Reset View
+                  </button>
+                </div>
                 <div style={{ height: '400px', width: '100%' }}>
                   <MapContainer 
                     center={mapCenter} 
                     zoom={15} 
                     style={{ height: '100%', width: '100%' }}
+                    whenCreated={(map) => { mapRef.current = map; }}
                   >
                     <TileLayer
                       attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
