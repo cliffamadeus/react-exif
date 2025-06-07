@@ -5,4 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base:"/react-exif",
   plugins: [react()],
+  server: {
+    port: 8060,
+  },
 })
