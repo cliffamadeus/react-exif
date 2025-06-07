@@ -1,10 +1,23 @@
 import React, { useState } from 'react';
 import ExifReader from 'exifreader';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icons in Leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const ImageUpload = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [metadata, setMetadata] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [mapCenter, setMapCenter] = useState([0, 0]);
+  const [hasLocation, setHasLocation] = useState(false);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -20,8 +33,19 @@ const ImageUpload = () => {
         const tags = await ExifReader.load(file);
         console.log('EXIF Metadata:', tags); // Log metadata for debugging
         setMetadata(tags);
+
+        // Check for GPS coordinates
+        if (tags.GPSLatitude && tags.GPSLongitude) {
+          const lat = parseFloat(tags.GPSLatitude.description);
+          const lng = parseFloat(tags.GPSLongitude.description);
+          setMapCenter([lat, lng]);
+          setHasLocation(true);
+        } else {
+          setHasLocation(false);
+        }
       } catch (error) {
         console.error('Error processing EXIF data:', error);
+        setHasLocation(false);
       }
     }
   };
@@ -65,37 +89,6 @@ const ImageUpload = () => {
           )}
         </div>
         <div className="col-md-9">
-          {/* Subset Metadata
-          {metadata && (
-            <div className="card">
-              <div className="card-body">
-                <h5 className="card-title">Image Metadata</h5>
-                <p className="card-text">
-                  <strong>Latitude:</strong> {metadata.GPSLatitude?.description}<br />
-                  <strong>Longitude:</strong> {metadata.GPSLongitude?.description}<br />
-                  <strong>Date:</strong> {metadata.DateTime?.description}
-                </p>
-              </div>
-            </div>
-          )}
-          */}
-
-          {/* Full Metadata
-          {metadata && (
-            <div className="card">
-              <div className="card-body">
-                <h5 className="card-title">Image Metadata</h5>
-                <ul className="list-group list-group-flush">
-                  {Object.entries(metadata).map(([key, tag]) => (
-                    <li key={key} className="list-group-item">
-                      <strong>{key}:</strong> {tag.description || tag.value?.toString()}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}*/}
-
           {metadata && (
             <div className="card mt-4">
               <div className="card-body">
@@ -118,6 +111,33 @@ const ImageUpload = () => {
                   <div className="col-md-6">
                     {renderMetadataGroup("🖼️ Image Properties", ["Orientation", "ImageWidth", "ImageHeight"])}
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {hasLocation && (
+            <div className="card mt-4">
+              <div className="card-body">
+                <h5 className="card-title">Location Map</h5>
+                <div style={{ height: '400px', width: '100%' }}>
+                  <MapContainer 
+                    center={mapCenter} 
+                    zoom={15} 
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <Marker position={mapCenter}>
+                      <Popup>
+                        Image was taken here<br />
+                        Latitude: {mapCenter[0].toFixed(6)}<br />
+                        Longitude: {mapCenter[1].toFixed(6)}
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
                 </div>
               </div>
             </div>
@@ -149,8 +169,6 @@ const ImageUpload = () => {
               </div>
             </div>
           )}
-
-
         </div>
       </div>
     </div>
