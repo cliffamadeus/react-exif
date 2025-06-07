@@ -20,7 +20,8 @@ const ImageUpload = () => {
   const [hasLocation, setHasLocation] = useState(false);
   const mapRef = useRef(null);
   const [originalCenter, setOriginalCenter] = useState([0, 0]);
-  const [mapKey, setMapKey] = useState(0); // Key to force remount
+  const [mapKey, setMapKey] = useState(0);
+  const fileInputRef = useRef(null);
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -31,13 +32,11 @@ const ImageUpload = () => {
       };
       reader.readAsDataURL(file);
 
-      // Process EXIF metadata
       try {
         const tags = await ExifReader.load(file);
         console.log('EXIF Metadata:', tags);
         setMetadata(tags);
 
-        // Check for GPS coordinates
         if (tags.GPSLatitude && tags.GPSLongitude) {
           const lat = parseFloat(tags.GPSLatitude.description);
           const lng = parseFloat(tags.GPSLongitude.description);
@@ -46,7 +45,7 @@ const ImageUpload = () => {
           setMapCenter(newCenter);
           setOriginalCenter(newCenter);
           setHasLocation(true);
-          setMapKey(prevKey => prevKey + 1); // Force map remount
+          setMapKey(prevKey => prevKey + 1);
         } else {
           setHasLocation(false);
         }
@@ -63,7 +62,19 @@ const ImageUpload = () => {
     }
   };
 
-  // Alternative approach using useEffect (optional)
+  const handleClearAll = () => {
+    setImagePreview(null);
+    setMetadata(null);
+    setShowModal(false);
+    setMapCenter([0, 0]);
+    setHasLocation(false);
+    setOriginalCenter([0, 0]);
+    setMapKey(0);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''; // Clear the file input
+    }
+  };
+
   useEffect(() => {
     if (mapRef.current && hasLocation) {
       mapRef.current.flyTo(mapCenter, 15);
@@ -92,21 +103,40 @@ const ImageUpload = () => {
     <div className="container mt-6">
       <div className="row">
         <div className="col-md-3">
-          <input type="file" accept="image/*" onChange={handleImageUpload} />
+          <input 
+            type="file" 
+            accept="image/*" 
+            onChange={handleImageUpload} 
+            ref={fileInputRef}
+          />
           {imagePreview && (
             <div className="mt-3">
-              <img style={{
-                    height: "45%",
-                    width: "45%"
-                    }} 
-                    src={imagePreview} alt="Preview" className="img-fluid" />
+              <img 
+                style={{ height: "45%", width: "45%" }} 
+                src={imagePreview} 
+                alt="Preview" 
+                className="img-fluid" 
+              />
             </div>
           )}
-          {metadata && (
-            <button className="btn btn-primary mt-3" onClick={handleOpenModal}>
-              View All Metadata
-            </button>
-          )}
+          <div className="d-flex flex-column mt-3">
+            {metadata && (
+              <>
+                <button 
+                  className="btn btn-primary mb-2" 
+                  onClick={handleOpenModal}
+                >
+                  View All Metadata
+                </button>
+                <button 
+                  className="btn btn-outline-danger" 
+                  onClick={handleClearAll}
+                >
+                  Clear All Data
+                </button>
+              </>
+            )}
+          </div>
         </div>
         <div className="col-md-9">
           {metadata && (
@@ -115,21 +145,21 @@ const ImageUpload = () => {
                 <h5 className="card-title">Grouped Image Metadata</h5>
                 <div className="row">
                   <div className="col-md-4">
-                    {renderMetadataGroup("📍 Location", ["GPSLatitude", "GPSLongitude", "GPSAltitude"])}
+                    {renderMetadataGroup("Location", ["GPSLatitude", "GPSLongitude", "GPSAltitude"])}
                   </div>
                   <div className="col-md-4">
-                    {renderMetadataGroup("📷 Camera Info", ["Make", "Model", "LensModel"])}
+                    {renderMetadataGroup("Camera Info", ["Make", "Model", "LensModel"])}
                   </div>
                   <div className="col-md-4">
-                    {renderMetadataGroup("🔧 Shooting Settings", ["ExposureTime", "FNumber", "ISOSpeedRatings"])}
+                    {renderMetadataGroup("Shooting Settings", ["ExposureTime", "FNumber", "ISOSpeedRatings"])}
                   </div>
                 </div>
                 <div className="row mt-3">
                   <div className="col-md-6">
-                    {renderMetadataGroup("🗓️ Date & Time", ["DateTimeOriginal", "DateTime"])}
+                    {renderMetadataGroup("Date & Time", ["DateTimeOriginal", "DateTime"])}
                   </div>
                   <div className="col-md-6">
-                    {renderMetadataGroup("🖼️ Image Properties", ["Orientation", "ImageWidth", "ImageHeight"])}
+                    {renderMetadataGroup("Image Properties", ["Orientation", "ImageWidth", "ImageHeight"])}
                   </div>
                 </div>
               </div>
@@ -150,7 +180,6 @@ const ImageUpload = () => {
                   </button>
                 </div>
                 <div style={{ height: '400px', width: '100%' }}>
-                  {/* Using key prop to force remount when location changes */}
                   <MapContainer 
                     key={`map-${mapKey}`}
                     center={mapCenter} 
