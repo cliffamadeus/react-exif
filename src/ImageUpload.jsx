@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ExifReader from 'exifreader';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -20,6 +20,7 @@ const ImageUpload = () => {
   const [hasLocation, setHasLocation] = useState(false);
   const mapRef = useRef(null);
   const [originalCenter, setOriginalCenter] = useState([0, 0]);
+  const [mapKey, setMapKey] = useState(0); // Key to force remount
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -40,9 +41,12 @@ const ImageUpload = () => {
         if (tags.GPSLatitude && tags.GPSLongitude) {
           const lat = parseFloat(tags.GPSLatitude.description);
           const lng = parseFloat(tags.GPSLongitude.description);
-          setMapCenter([lat, lng]);
-          setOriginalCenter([lat, lng]); // Store original center for reset
+          const newCenter = [lat, lng];
+          
+          setMapCenter(newCenter);
+          setOriginalCenter(newCenter);
           setHasLocation(true);
+          setMapKey(prevKey => prevKey + 1); // Force map remount
         } else {
           setHasLocation(false);
         }
@@ -58,6 +62,13 @@ const ImageUpload = () => {
       mapRef.current.flyTo(originalCenter, 15);
     }
   };
+
+  // Alternative approach using useEffect (optional)
+  useEffect(() => {
+    if (mapRef.current && hasLocation) {
+      mapRef.current.flyTo(mapCenter, 15);
+    }
+  }, [mapCenter, hasLocation]);
 
   const renderMetadataGroup = (title, keys) => (
     <div className="mb-3">
@@ -139,7 +150,9 @@ const ImageUpload = () => {
                   </button>
                 </div>
                 <div style={{ height: '400px', width: '100%' }}>
+                  {/* Using key prop to force remount when location changes */}
                   <MapContainer 
+                    key={`map-${mapKey}`}
                     center={mapCenter} 
                     zoom={15} 
                     style={{ height: '100%', width: '100%' }}
