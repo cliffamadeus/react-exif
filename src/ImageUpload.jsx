@@ -4,6 +4,9 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
+import { IonIcon } from '@ionic/react';
+import { cloudUpload, eyeOffOutline, eyeSharp } from 'ionicons/icons';
+
 // Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -99,16 +102,15 @@ const ImageUpload = () => {
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
 
+  const handleClick = () => {
+    fileInputRef.current.click(); // Trigger the hidden input
+  };
+
   return (
     <div className="container mt-6">
       <div className="row">
-        <div className="col-md-3">
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={handleImageUpload} 
-            ref={fileInputRef}
-          />
+        <div className="col-md-3 mb-3">
+           
           {imagePreview && (
             <div className="mt-3">
               <img 
@@ -119,15 +121,50 @@ const ImageUpload = () => {
               />
             </div>
           )}
+           <div>
+              <button 
+                onClick={handleClick} 
+                style={{
+                  padding: '10px 20px',
+                  backgroundColor: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  marginTop:'1rem'
+                }}
+              >
+                <IonIcon 
+                  icon={cloudUpload}
+                  style={{
+                    fontSize: '22px'
+                    }} 
+                />
+                Upload Image
+              </button>
+
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleImageUpload} 
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+              />
+            </div>  
           <div className="d-flex flex-column mt-3">
             {metadata && (
               <>
-                <button 
-                  className="btn btn-primary mb-2" 
+               <button 
+                  className="btn btn-primary mb-2 flex items-center justify-center gap-2"
                   onClick={handleOpenModal}
                 >
+                  <IonIcon 
+                    icon={eyeSharp}
+                    className="text-xl"
+                  />
                   View All Metadata
                 </button>
+
                 <button 
                   className="btn btn-outline-danger" 
                   onClick={handleClearAll}
