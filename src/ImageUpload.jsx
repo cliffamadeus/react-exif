@@ -5,7 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import { IonIcon } from '@ionic/react';
-import { cloudUpload, eyeOffOutline, eyeSharp } from 'ionicons/icons';
+import {eyeSharp, imageOutline } from 'ionicons/icons';
 
 // Fix for default marker icons in Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -122,10 +122,12 @@ const ImageUpload = () => {
             </div>
           )}
            <div>
+            
+              <div class="d-grid gap-2">
               <button 
                 onClick={handleClick} 
                 style={{
-                  padding: '10px 20px',
+                  padding: '10px',
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
@@ -133,16 +135,19 @@ const ImageUpload = () => {
                   cursor: 'pointer',
                   marginTop:'1rem'
                 }}
+                className='btn-lg'
               >
                 <IonIcon 
-                  icon={cloudUpload}
+                  icon={imageOutline}
                   style={{
-                    fontSize: '22px'
-                    }} 
+                    fontSize: '32px',
+                    marginRight:'-5%',
+                    marginTop:'5%'
+                  }} 
                 />
-                Upload Image
+                <p>Upload Image</p>
               </button>
-
+              </div>
               <input 
                 type="file" 
                 accept="image/*" 
@@ -161,8 +166,11 @@ const ImageUpload = () => {
                   <IonIcon 
                     icon={eyeSharp}
                     className="text-xl"
+                    style={{
+                      fontSize: '25px'
+                    }} 
                   />
-                  View All Metadata
+                  <p>View All Metadata</p>
                 </button>
 
                 <button 
